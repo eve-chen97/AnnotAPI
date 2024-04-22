@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Polygon Data</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Polygon Data</h1>
+    <table>
+        <tr>
+            <th>X</th>
+            <th>Y</th>
+        </tr>
+        {% for vertex in vertices %}
+            <tr>
+                <td>{{ vertex['x'] }}</td>
+                <td>{{ vertex['y'] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

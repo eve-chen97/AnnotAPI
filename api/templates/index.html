@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Data Display</title>
+    <style>
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Population Data</h1>
+    <table>
+        <tr>
+            <!-- Assuming you have two markers CD20 and CD19 -->
+            <th>CD20</th>
+            <th>CD19</th>
+        </tr>
+        {% for row in population_data %}
+        <tr>
+            <td>{{ row['CD20'] }}</td>
+            <td>{{ row['CD19'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h1>Polygon Vertices</h1>
+    <table>
+        <tr>
+            <th>x</th>
+            <th>y</th>
+        </tr>
+        {% for vertex in polygon_vertices %}
+        <tr>
+            <td>{{ vertex['x'] }}</td>
+            <td>{{ vertex['y'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
