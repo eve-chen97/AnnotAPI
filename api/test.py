@@ -19,13 +19,23 @@ master_polygon_file = 'master_map_polygons_5_CD4_CD8.json'
 master_polygon_path = os.path.join(directory_path, master_polygon_file)
 
 
+# Define whether plots should be generated and the division matrix
+do_plots = False
+matrix_division = 32
+
 payload = {
     "input_new_file": input_file_path,
     "polygons_new_file": polygons_new_path,
     "alignment_data": alignment_path,
     "input_master_map": mastermap_path,
     "polygons_master_map": master_polygon_path,
+    "Do_Plots": do_plots,
+    "matrix_division": matrix_division
 }
 
 response = requests.post(r_api_url, headers=headers, data=json.dumps(payload))
-print(response.json())
+# Handle the response
+if response.status_code == 200:
+    print("Success:", response.json())
+else:
+    print("Error:", response.text)
