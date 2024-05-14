@@ -5,8 +5,8 @@ library(jsonlite)
 
 # Load Pixel ID R scripts
 # source('label_to_alphahull.R')
-source('pixel_ID_func.R')
-source('pixel_ID_WebService.R')
+source('pixel_id_r_scripts/functions/pixel_ID_func.R')
+source('pixel_id_r_scripts/functions/pixel_ID_WebService.R')
 
 #* @post /pixel_id
 function(req, res) {

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_file
 import pandas as pd
 import os
 import tempfile
+import shutil
 from werkzeug.utils import secure_filename
 #from population_data import PopulationData
 #from polygon_data import PolygonData
@@ -116,71 +117,84 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 @app.route('/pixel_id', methods=['POST'])
 def pixel_id():
-    if 'input_new_file' not in request.files or 'polygon_file' not in request.files:
-        return jsonify({"error": "Missing file parts (expected 'input_new_file' and 'polygon_file')"}), 400
+    try:
+        if 'input_new_file' not in request.files or 'polygon_file' not in request.files:
+            return jsonify({"error": "Missing file parts (expected 'input_new_file' and 'polygon_file')"}), 400
 
-    input_new_file = request.files['input_new_file']
-    polygon_file = request.files['polygon_file']
+        input_new_file = request.files['input_new_file']
+        polygon_file = request.files['polygon_file']
 
-    # If the user does not select a file, the browser submits an empty file without a filename.
-    if input_new_file.filename == '' or polygon_file.filename == '':
-        return jsonify({"error": "Missing selected file (expected 'input_new_file' and 'polygon_file')"}), 400
+        # If the user does not select a file, the browser submits an empty file without a filename.
+        if input_new_file.filename == '' or polygon_file.filename == '':
+            return jsonify({"error": "Missing selected file (expected 'input_new_file' and 'polygon_file')"}), 400
 
-    temp_upload_dir = tempfile.mkdtemp()
-    input_file_path = os.path.join(temp_upload_dir, secure_filename(input_new_file.filename))
-    polygon_path = os.path.join(temp_upload_dir, secure_filename(polygon_file.filename))
-       
-    input_new_file.save(input_file_path)
-    polygon_file.save(polygon_path)
+        temp_upload_dir = tempfile.mkdtemp()
+        input_file_path = os.path.join(temp_upload_dir, secure_filename(input_new_file.filename))
+        polygon_path = os.path.join(temp_upload_dir, secure_filename(polygon_file.filename))
+        
+        input_new_file.save(input_file_path)
+        polygon_file.save(polygon_path)
 
-    # Files of master map
-    directory_path = os.path.join(os.getcwd(), 'test_data')
-    master_map_file = 'master_map_5_CD4_CD8.csv'
-    mastermap_path = os.path.join(directory_path, master_map_file)
-    master_polygon_file = 'master_map_polygons_5_CD4_CD8.json'
-    master_polygon_path = os.path.join(directory_path, master_polygon_file)
+        # Files of master map
+        directory_path = os.path.join(os.getcwd(), 'test_data')
+        master_map_file = 'master_map_5_CD4_CD8.csv'
+        mastermap_path = os.path.join(directory_path, master_map_file)
+        master_polygon_file = 'master_map_polygons_5_CD4_CD8.json'
+        master_polygon_path = os.path.join(directory_path, master_polygon_file)
 
-    # Run alignment function first       
-    # Get alignment results
-    alignment_results_df = alignment_2D_flowdata(
-        file1=input_file_path,
-        file2=mastermap_path,
-        j=1,
-        k=0,
-        project="ANNOTAPI",
-        Fast=True,
-        bin_size=64,
-        verbose=False,
-        save=False,
-        sample_size=50000
-    )
+        # Run alignment function first       
+        # Get alignment results
+        alignment_results_df = alignment_2D_flowdata(
+            file1=input_file_path,
+            file2=mastermap_path,
+            j=1,
+            k=0,
+            project="ANNOTAPI",
+            Fast=True,
+            bin_size=64,
+            verbose=False,
+            save=False,
+            sample_size=50000
+        )
 
-    # Save the alignment results and get directory
-    alignment_path = os.path.join(temp_upload_dir, 'alignment_results.csv')
-    # Write the CSV data to a file using DataFrame's to_csv method
-    # alignment_result_csv = alignment_results_df.to_csv(index=False)
-    alignment_results_df.to_csv(alignment_path, index=False)
+        # Save the alignment results and get directory
+        alignment_path = os.path.join(temp_upload_dir, 'alignment_results.csv')
+        # Write the CSV data to a file using DataFrame's to_csv method
+        # alignment_result_csv = alignment_results_df.to_csv(index=False)
+        alignment_results_df.to_csv(alignment_path, index=False)
 
-    input_data = {
-        "input_new_file": input_file_path,
-        "polygons_new_file": polygon_path,
-        "alignment_data": alignment_path,
-        "input_master_map": mastermap_path,
-        "polygons_master_map": master_polygon_path
-    }
+        # return alignment_results_df.to_csv(index=False)
+
+        # os.remove(input_file_path)
+        # os.remove(polygon_path)
+        # os.remove(alignment_path)
+        # os.rmdir(temp_upload_dir)
+
+        input_new_file = 'test_population_data.csv'
+        input_file_path = os.path.join(directory_path, input_new_file)
+        polygons_new_file = 'new_input_polygons_all.json'
+        polygon_path = os.path.join(directory_path, polygons_new_file)
+
+        input_data = {
+            "input_new_file": input_file_path,
+            "polygons_new_file": polygon_path,
+            "alignment_data": alignment_path,
+            "input_master_map": mastermap_path,
+            "polygons_master_map": master_polygon_path
+        }
 
     # Try to call the R service
-    try:
-        results = call_r_service(input_data)
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        result = call_r_service(input_data)
+        response = jsonify({"status": "success", "results": result})
+        return response
+
+    except Exception as ex:
+        response = jsonify({"error": "Failed to process data", "message": str(ex)}), 500
+        return response
+    
     finally:
         # Clean up files
-        os.remove(input_file_path)
-        os.remove(polygon_path)
-        os.remove(alignment_path)
-        os.rmdir(temp_upload_dir)
+        shutil.rmtree(temp_upload_dir)  # This will remove all contents and the directory itself
 
 if __name__ == '__main__':
     app.run(debug=True)

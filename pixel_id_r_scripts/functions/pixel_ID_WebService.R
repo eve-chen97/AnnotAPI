@@ -1,6 +1,10 @@
 library("sp")
 library("stringr")
+library("plot3D")
 library("jsonlite")
+# if (!require("scattermore")) install.packages("scattermore")
+#     library("scattermore")
+# library("alphahull") # 
 
 pixel_ID_WebService <- function(input_new_file_path, # user upload
                                 polygons_new_file_path, # user upload
@@ -38,9 +42,10 @@ pixel_ID_WebService <- function(input_new_file_path, # user upload
         dev.off()
     }
     
-    # some extra steps for tests
+    #some extra steps for tests
     input_new_file <- read.csv(input_new_file_path)
-    polygons_new_file <- lapply(polygons_new_file_path, function(x) as.data.frame(fromJSON(x))) %>% dplyr::bind_rows()
+    polygons_new_file <- fromJSON(polygons_new_file_path)
+    #polygons_new_file <- lapply(polygons_new_file_path, function(x) as.data.frame(fromJSON(x))) %>% dplyr::bind_rows()
     alignment_data <- read.csv(alignment_data_path)
     input_master_map <- read.csv(input_master_map_path)
     polygons_master_map <- fromJSON(polygons_master_map_path)
@@ -78,9 +83,13 @@ pixel_ID_WebService <- function(input_new_file_path, # user upload
     
     pixel_ID_scores <- scores[cbind(1:s1_len, matches)]
     pixel_ID_names <- names(polygons_master_map)[matches]
-    names(pixel_ID_scores) <- pixel_ID_names
+    #names(pixel_ID_scores) <- pixel_ID_names
     
-    return(pixel_ID_scores)
+    #return(pixel_ID_scores)
+    
+    # Convert the results to a JSON object
+    json_output <- toJSON(list(names = pixel_ID_names, scores = pixel_ID_scores))
+    cat(json_output)
 }
 
 
